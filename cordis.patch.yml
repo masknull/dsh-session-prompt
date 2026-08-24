@@ -1,0 +1,13 @@
+# 会话头部提示词注入(dsh-session-prompt)
+# 在每个会话的系统提示词最前注入自定义内容;设置页(设置 → 插件配置)中可编辑,
+# 保存后对下一次请求立即生效。
+- insert:
+    - id: session-head-prompt
+      name: dsh-session-prompt
+      config:
+        enabled: true
+        prompt: |-
+          你是 DeepSeek Harness 的通用助手。请始终遵守以下约定:
+          1. 默认使用简体中文回复。
+          2. 完成文件修改后,在最终回复中列出本次改动的主要文件。
+          3. 不确定时先说明假设,再继续执行。

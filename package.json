@@ -1,0 +1,54 @@
+{
+  "name": "dsh-session-prompt",
+  "description": "Inject a user-configured custom prompt at the very top of every session's system prompt; editable live from the web settings page",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "lib/index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/masknull/dsh-session-prompt.git"
+  },
+  "exports": {
+    ".": {
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "default": "./lib/client.js"
+    },
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/client.js",
+    "cordis.patch.yml",
+    "README.md",
+    "smoke.mjs"
+  ],
+  "scripts": {
+    "bundle": "tsdown",
+    "smoke": "node smoke.mjs"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "tsdown": "^0.22.2"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-runtime",
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-client-ui-settings"
+      ],
+      "platform": "web"
+    }
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "4.0.1",
+    "@deepseek-ai/schemastery": "3.18.1",
+    "@deepseek-ai/dsh-settings": "0.1.1-rc.2"
+  }
+}
