@@ -37,7 +37,7 @@ const ID = 'dsh-session-prompt'
 
 /**
  * Module-table specifiers the client bundle leaves as require() calls: the
- * platform seed words plus the preloaded runtime row. A type-only import is
+ * platform seed words plus the client-store row. A type-only import is
  * erased before resolution and never needs to be listed here.
  */
 const CLIENT_EXTERNALS = new Set([
@@ -46,9 +46,9 @@ const CLIENT_EXTERNALS = new Set([
   'react-dom',
   'react-dom/client',
   '@deepseek-ai/cordis',
+  '@deepseek-ai/dsh-client-store',
   '@deepseek-ai/dsh-client-ui-slots',
   '@deepseek-ai/dsh-client-ui-primitives',
-  '@deepseek-ai/dsh-client-runtime/client',
 ])
 
 /** Client bundle: the loader's lazy-CJS factory artifact. */
@@ -76,10 +76,22 @@ const client = {
   outputOptions: {
     entryFileNames: 'client.js',
     // The loader calls the factory with its own require; `module.exports` is
-    // what the wrapper returns to the loader.
-    banner: `window.__ModuleLoader__.load({ id: ${JSON.stringify(ID)}, factory: (require) => {`,
-    footer: 'return module.exports; } });',
-    intro: 'var module = { exports: {} }; var exports = module.exports;',
+    // what the wrapper returns to the loader. The factory is wrapped in a
+    // try/catch so a host whose frozen module table predates the client-store
+    // migration (DSH >= 0.1.2-alpha.1 removed @deepseek-ai/dsh-client-runtime
+    // and shipped the store primitives as the seed word @deepseek-ai/dsh-client-store)
+    // refuses to load with a clear diagnostic instead of the loader's generic
+    // "missed the module table" error.
+    banner: `window.__ModuleLoader__.load({ id: ${JSON.stringify(ID)}, factory: (require) => { try {`,
+    footer: 'return module.exports; } catch (cause) { throw __dshClientCompatGuard(cause); } } });',
+    intro: `var module = { exports: {} }; var exports = module.exports;
+function __dshClientCompatGuard(cause) {
+  var message = cause instanceof Error ? cause.message : String(cause);
+  if (message.indexOf("missed the module table") !== -1 && message.indexOf("@deepseek-ai/dsh-client-store") !== -1) {
+    return new Error(${JSON.stringify(ID)} + " requires DSH >= dsh-v0.1.2-alpha.1: the Host frozen module table lacks @deepseek-ai/dsh-client-store (the client-runtime package was removed upstream). Update DeepSeek Harness, or use a plugin release built for older DSH. Underlying: " + message);
+  }
+  return cause;
+}`,
   },
 }
 

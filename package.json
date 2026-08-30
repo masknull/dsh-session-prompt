@@ -1,7 +1,7 @@
 {
   "name": "dsh-session-prompt",
   "description": "Inject a user-configured custom prompt at the very top of every session's system prompt; editable live from the web settings page",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "main": "lib/index.js",
   "repository": {
@@ -39,7 +39,7 @@
     },
     "client": {
       "inject": [
-        "@deepseek-ai/dsh-client-runtime",
+        "@deepseek-ai/dsh-client-store",
         "@deepseek-ai/dsh-client-locale",
         "@deepseek-ai/dsh-client-ui-settings"
       ],

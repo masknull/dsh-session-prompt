@@ -3,7 +3,7 @@
  * snapshot projection, and the injected business face.
  */
 
-import type { SnapshotStore } from '@deepseek-ai/dsh-client-runtime/client'
+import type { SnapshotStore } from '@deepseek-ai/dsh-client-store'
 import type { CardActions, CardFieldState, CardShell } from './card-form.ts'
 
 /** The host useEffect the card edits. Kept typed here rather than copied from the Host package. */
