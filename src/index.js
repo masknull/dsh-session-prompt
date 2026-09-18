@@ -12,15 +12,25 @@
  * @module dsh-session-head-prompt
  */
 
+/**
+ * Host-API note: DSH 0.1.5-rc.x removed the `installSettingsSection` /
+ * `settingsNamespace` exports from `@deepseek-ai/dsh-settings`. A settings
+ * namespace is now a plain validated string, and registration goes through
+ * the `settings` service's `installSection` method, wrapped in
+ * `ctx.inject(['settings'], ...)` so a profile without a settings provider
+ * falls back to the composition entry (the same pattern the host's own
+ * bash-local and web-search-deepseek plugins use).
+ */
+
 import z from '@deepseek-ai/schemastery'
-import { installSettingsSection, settingsNamespace } from '@deepseek-ai/dsh-settings'
 
 /**
  * Settings namespace owning the user-editable section of this plugin
  * (lowercase kebab-case; paired with the same key on the web settings card).
- * @type {import('@deepseek-ai/dsh-settings').SettingsNamespace}
+ * On DSH >= 0.1.5-rc.x a namespace is a plain string.
+ * @type {string}
  */
-export const SETTINGS_NAMESPACE = settingsNamespace('session-head-prompt')
+export const SETTINGS_NAMESPACE = 'session-head-prompt'
 
 /**
  * Prompt order of the injected section. Sections concatenate in ascending
@@ -74,23 +84,27 @@ export function apply(ctx, config) {
   // The effective source: the resolved settings scope while one is attached
   // (user document over the entry), the composition entry otherwise.
   let source = () => config
-  installSettingsSection(ctx, SETTINGS_NAMESPACE, Config, config, {
-    // A prompt the renderer could not render must not be stored: refuse the
-    // write that would produce it instead of failing the next request.
-    validate: (value) => {
-      if (typeof value.prompt !== 'string') return
-      if (COMPLETE_GROUP.test(value.prompt)) {
-        throw new Error(
-          'session-head-prompt: the prompt contains a complete {{…}} group, which the system-prompt '
-          + 'renderer would try to interpolate as a template variable and fail on; remove the '
-          + 'braces or reformulate the text',
-        )
-      }
-    },
-    setSource: (current) => { source = current },
-    // The section provider reads source() per assembly, so a committed change
-    // needs no rebuild here — it is already what the next request renders.
-    onChange: () => {},
+  // Register with the settings service when present; the inject wrapper keeps
+  // profiles without a settings provider on the composition-entry fallback.
+  ctx.inject(['settings'], (settingsCtx) => {
+    settingsCtx.settings.installSection(ctx, SETTINGS_NAMESPACE, Config, config, {
+      // A prompt the renderer could not render must not be stored: refuse the
+      // write that would produce it instead of failing the next request.
+      validate: (value) => {
+        if (typeof value.prompt !== 'string') return
+        if (COMPLETE_GROUP.test(value.prompt)) {
+          throw new Error(
+            'session-head-prompt: the prompt contains a complete {{…}} group, which the system-prompt '
+            + 'renderer would try to interpolate as a template variable and fail on; remove the '
+            + 'braces or reformulate the text',
+          )
+        }
+      },
+      setSource: (current) => { source = current },
+      // The section provider reads source() per assembly, so a committed change
+      // needs no rebuild here — it is already what the next request renders.
+      onChange: () => {},
+    })
   })
   ctx.systemPrompt.section({
     name: HEAD_SECTION,
