@@ -1,7 +1,7 @@
 {
   "name": "dsh-session-prompt",
   "description": "Inject a user-configured custom prompt at the very top of every session's system prompt; editable live from the web settings page",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "type": "module",
   "main": "lib/index.js",
   "repository": {
