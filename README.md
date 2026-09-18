@@ -15,7 +15,7 @@ A [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) plugin tha
 ### 环境要求
 
 - 安装了 Web UI 的 DSH 实例(含 profile 与用户设置提供方),且 `dsh` CLI 在 `PATH` 中。
-- **版本 v0.2.0 起要求 DSH ≥ `dsh-v0.1.2-alpha.1`**(该版本把快照 store 原语从 `@deepseek-ai/dsh-client-runtime/client` 迁移为冻结模块表词 `@deepseek-ai/dsh-client-store`)。在更老的宿主上本插件会**拒绝加载**并给出明确诊断;旧 DSH 请使用 v0.1.x 版本(v0.1.0 发布于 client-runtime 时代)。
+- **版本 v0.2.1 起要求 DSH ≥ `0.1.5-rc.1`**(0.1.5-rc.x 从 `@deepseek-ai/dsh-settings` 移除了 `installSettingsSection` / `settingsNamespace` 导出,设置命名空间改为普通字符串,注册走 `settings` 服务的 `installSection` 方法)。在更老的宿主上本插件**无法加载**;DSH `dsh-v0.1.2-alpha.1` ~ `0.1.4.x` 请使用 v0.2.0,更早的宿主请使用 v0.1.x。
 
 ### 安装
 
@@ -90,7 +90,7 @@ MIT
 ### Requirements
 
 - A DSH installation that hosts the web UI (a profile and the user-settings provider must be present), and the `dsh` CLI on `PATH`.
-- **v0.2.0+ requires DSH ≥ `dsh-v0.1.2-alpha.1`** (that release moved the snapshot-store primitives from `@deepseek-ai/dsh-client-runtime/client` into the frozen module-table word `@deepseek-ai/dsh-client-store`). On older hosts this plugin refuses to load with a clear diagnostic; use the v0.1.x line (built for the client-runtime era) there.
+- **v0.2.1+ requires DSH ≥ `0.1.5-rc.1`** (0.1.5-rc.x removed the `installSettingsSection` / `settingsNamespace` exports from `@deepseek-ai/dsh-settings`; a settings namespace is now a plain string registered through the settings service's `installSection` method). Older hosts cannot load this plugin; use v0.2.0 on DSH `dsh-v0.1.2-alpha.1` ~ `0.1.4.x`, and the v0.1.x line on anything older.
 
 ### Install
 
