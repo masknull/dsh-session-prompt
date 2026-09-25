@@ -16,7 +16,8 @@
       "default": "./lib/client.js"
     },
     "./cordis.patch.yml": "./cordis.patch.yml",
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
   },
   "files": [
     "lib/index.js",
@@ -24,7 +25,8 @@
     "cordis.patch.yml",
     "README.md",
     "smoke.mjs",
-    "assets"
+    "assets",
+    "locale/*.json"
   ],
   "scripts": {
     "bundle": "tsdown",

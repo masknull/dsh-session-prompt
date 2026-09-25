@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Session Prompt",
+    "description": "Inject a custom prompt at the very top of every session's system prompt, editable live in the Web settings page."
+  }
+}
