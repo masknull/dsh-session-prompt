@@ -64,14 +64,12 @@
   color: var(--dsw-alias-label-tertiary);
 }
 
+/* 与 qoder/workbuddy 卡片一致的 chevron 规则:固定三层色,只有旋转有动画 */
 .shp-chevron {
   flex: none;
+  display: flex;
   color: var(--dsw-alias-label-tertiary);
   transition: transform 0.16s;
-}
-
-.shp-chevronOpen {
-  transform: rotate(180deg);
 }
 
 .shp-body {

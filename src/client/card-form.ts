@@ -11,7 +11,44 @@
  */
 
 import { createSnapshotStore, type SnapshotStore } from '@deepseek-ai/dsh-client-store'
-import type { SettingsScope } from '@deepseek-ai/dsh-client-ui-settings/client'
+
+/**
+ * One namespace's state as the Host serves it.
+ *
+ * Spelled structurally rather than imported: 0.1.5 serves it from
+ * `ctx.settingsScope` (a namespace the plugin registers), 0.1.7 from
+ * `ctx.configForms` (a profile entry), and both answer the same fields — so the
+ * form below needs one shape instead of a type from a specific Host version
+ * (a client bundle may not depend on a Host package anyway).
+ */
+export interface SettingsSnapshot<T> {
+  /** `'ready'` once the Host serves this namespace; anything else means it is not served (yet). */
+  status: string
+  /** Effective value: the user layer over the composition layer over the schema default. */
+  value: T | undefined
+  /** The composition layer the user layer starts from. */
+  base: T | undefined
+  /** Raw user layer; presence of a field, not value equality, marks an override. */
+  user: T | undefined
+  /** Host revision the last read answered; writes are fenced with it. */
+  revision: number | undefined
+  /** Whether the Host document accepts writes. */
+  writable: boolean
+  /** Persistence mode the Host answered with. */
+  mode: string
+}
+
+/** The settings controller face both Host versions answer. */
+export interface SettingsScope<T> {
+  /** Current synchronous snapshot (stable reference until the next change). */
+  getSnapshot(): SettingsSnapshot<T>
+  /** Observe snapshot replacements. */
+  subscribe(listener: () => void): () => void
+  /** Queue one field write. */
+  set(field: string, value: unknown): Promise<unknown>
+  /** Queue one field clear. */
+  unset(field: string): Promise<unknown>
+}
 
 /** The write one field's staged text performs when the card is saved. */
 export type FieldWrite =
@@ -157,7 +194,7 @@ export class CardForm<T> {
     const snapshot = this.scope.getSnapshot()
     const plan = this.plan()
     return {
-      available: snapshot.status === 'ready',
+      available: snapshot.status === 'ready' || snapshot.status === 'loading',
       writable: snapshot.writable,
       dirty: plan.length > 0,
       invalid: plan.some(item => item.run === undefined),
@@ -257,15 +294,17 @@ export class CardForm<T> {
   }
 
   private sectionValue(field: string): unknown {
-    return (this.scope.getSnapshot().value as Record<string, unknown> | undefined)?.[field]
+    const value = this.scope.getSnapshot().value
+    return (value as unknown as Record<string, unknown> | undefined)?.[field]
   }
 
   private baseValue(field: string): unknown {
-    return (this.scope.getSnapshot().base as Record<string, unknown> | undefined)?.[field]
+    const value = this.scope.getSnapshot().base
+    return (value as unknown as Record<string, unknown> | undefined)?.[field]
   }
 
   private userLayer(): Record<string, unknown> | undefined {
-    return this.scope.getSnapshot().user as Record<string, unknown> | undefined
+    return this.scope.getSnapshot().user as unknown as Record<string, unknown> | undefined
   }
 
   private stored(field: string): boolean {

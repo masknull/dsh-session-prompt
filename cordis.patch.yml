@@ -1,13 +1,12 @@
 # 会话头部提示词注入(dsh-session-prompt)
 # 在每个会话的系统提示词最前注入自定义内容;设置页(设置 → 插件配置)中可编辑,
 # 保存后对下一次请求立即生效。
+#
+# 纯 insert，不带 config：插件的用户配置自 0.1.7 迁移起存放在自有文件
+# `<profile>/.dsh-session-prompt/settings.json`（唯一事实源），出厂值由 schema
+# 默认给出（enabled: true、prompt: 空）。这里曾带一份示例 config，其后果是该
+# 值作为 inherited 层长期留在组合里，每次清理用户层后都会以“非默认值”的身份
+# 覆盖用户文件——见 docs/plugin-settings-own-file-migration.md 的种子规则。
 - insert:
     - id: session-head-prompt
       name: dsh-session-prompt
-      config:
-        enabled: true
-        prompt: |-
-          你是 DeepSeek Harness 的通用助手。请始终遵守以下约定:
-          1. 默认使用简体中文回复。
-          2. 完成文件修改后,在最终回复中列出本次改动的主要文件。
-          3. 不确定时先说明假设,再继续执行。
