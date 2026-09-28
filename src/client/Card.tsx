@@ -1,19 +1,15 @@
 /**
  * The settings card: an expandable entry in the web settings page's
- * "Plugin configuration" tab, keyed by the settings namespace it edits —
- * and, on the 0.1.7 plugin manager, the same card on the bundle's own page
- * in the sidebar's Plugins panel (opened expanded there, see `defaultOpen`
- * on the card face). It draws its own chrome — mirroring the shared
- * plugin-card design tokens (see ./card.css) — because cross-plugin value
- * imports are forbidden; the card writes only through the staged form's
+ * 《插件设置》 block and, on the 0.1.7 plugin manager, the same card on the
+ * bundle's own page in the sidebar's Plugins panel (opened expanded there,
+ * see `defaultOpen` on the card face). It draws its own chrome — mirroring
+ * the shared plugin-card design tokens (see ./card.css) — because cross-plugin
+ * value imports are forbidden; the card writes only through the staged form's
  * save action.
  */
 
 import { useState, useSyncExternalStore } from 'react'
 import type { InjectFace, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
-// Type-only: the keyed slot's declaration (cross-plugin collaboration goes
-// through cordis services; a value import would fail the bundle purity gate).
-import type {} from '@deepseek-ai/dsh-client-ui-settings-plugins/client'
 import type { HeadPromptCardFace } from './types.ts'
 import { promptCardState, subscribePromptCard } from './prompt-settings-store.ts'
 import css from './card.css'
@@ -55,7 +51,7 @@ export const CARD_CSS = css
 
 /** Props the renderer binds for this card. */
 export type HeadPromptCardProps =
-  PropsRuntime<'settings.plugin.item'>
+  PropsRuntime<'plugin-settings.item'>
   & InjectFace<HeadPromptCardFace>
 
 /** Copy used when the face carries no translator (a Host without the locale service). */

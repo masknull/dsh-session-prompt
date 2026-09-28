@@ -1,15 +1,14 @@
 /**
- * The shared "Plugin settings" block: ONE `settings.section` entry that holds
- * the settings cards of every card-shipping plugin.
+ * The shared 《插件设置》 block: ONE `settings.section` entry that holds the
+ * settings cards of every card-shipping plugin on DSH 0.1.7.
  *
- * DSH 0.1.5 hosts such cards in the plugins tab's keyed `settings.plugin.item`
- * slot; 0.1.7 removed both the tab and that slot while keeping
- * `settings.section`. A card plugin therefore contributes a section of its own
- * there — and since several plugins ship the same kind of card, they share one
- * section instead of stacking one block each: every copy of this module
- * declares the same container id, child slot, order, and label, the first
- * plugin to load builds the container, and the others attach their card to it
- * (see `attachToSharedPluginSettings`).
+ * The 0.1.5 plugins tab and its keyed `settings.plugin.item` slot are gone;
+ * 0.1.7 keeps `settings.section`, and a card plugin contributes a section of
+ * its own there — and since several plugins ship the same kind of card, they
+ * share one section instead of stacking one block each: every copy of this
+ * module declares the same container id, child slot, order, and label, the
+ * first plugin to load builds the container, and the others attach their card
+ * to it (see `attachToSharedPluginSettings`).
  *
  * The constants below are a contract between those plugins, not local choices:
  * changing one in isolation leaves the other copies attached to a different

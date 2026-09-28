@@ -1,21 +1,16 @@
 /**
- * Session head prompt — browser half. Registers the settings card into
- * whichever settings surface the Host offers: the 0.1.5 plugins tab's keyed
- * `settings.plugin.item` slot, or the shared "Plugin settings" block of the
- * 0.1.7 settings page (see ./plugin-settings-section.tsx). On a 0.1.7 Host
- * carrying the plugin manager, the same card also mounts on this bundle's own
- * page in the sidebar's Plugins panel (the `plugins.bundle.config` seat),
- * expanded there. The card reads and writes through the Host's settings
- * controller — `settingsScope` on 0.1.5, `configForms` on 0.1.7 — which fences
- * each write with the revision it read.
+ * Session head prompt — browser half. Registers the settings card into the
+ * shared 《插件设置》 block of the 0.1.7 settings page (see
+ * ./plugin-settings-section.tsx) and, on a 0.1.7 Host carrying the plugin
+ * manager, the same card on this bundle's own page in the sidebar's Plugins
+ * panel (the `plugins.bundle.config` seat), expanded there. The card reads
+ * and writes through this plugin's own settings face, served by the host half
+ * over the plugin's own file.
  */
 
 import type { Context } from '@deepseek-ai/cordis'
 // Type-only: the ctx.locale Context merge.
 import type {} from '@deepseek-ai/dsh-client-locale/client'
-// Type-only: the 0.1.5 `settings.plugin.item` keyed slot declaration (the 0.1.5
-// path registers into that key; cross-plugin value imports are forbidden).
-import type {} from '@deepseek-ai/dsh-client-ui-settings-plugins/client'
 import { booleanField, textField, CardForm } from './card-form.ts'
 import type { CardShell, SettingsScope } from './card-form.ts'
 import { OwnSettingsScope } from './http-settings-scope.ts'
@@ -40,29 +35,23 @@ export { LOCALE_NS } from './locales.ts'
 export { SHARED_ITEM_SLOT, SHARED_SECTION_ID, SHARED_SECTION_SLOT } from './plugin-settings-section.tsx'
 
 /**
- * Settings namespace this card edits on 0.1.5. Spelled here rather than imported
- * from the Host package: a client package must not depend on a Host package.
- */
-export const SETTINGS_NS = 'session-head-prompt'
-
-/**
  * Package name: the id this plugin registers its card under inside the shared
- * block's child slot (every attached plugin owns exactly one such id).
+ * block's child slot (every attached plugin owns exactly one such id), and the
+ * key its Plugins-panel registration is addressed by.
  */
 export const PACKAGE_ID = 'dsh-session-prompt'
 
 /**
- * Profile entry id the 0.1.7 settings form is addressed by.
+ * Profile entry id this plugin's settings are addressed by.
  *
- * On 0.1.7 a plugin's settings namespace IS its profile entry id (the Loader row
- * id): the Host keys every served form by `entry.options.id` and resolves a
- * write with `configEditor.entries().find((row) => row.options.id === ns)`, and
- * the built-in cards follow the same rule (their keys are the row ids
+ * On 0.1.7 a plugin's settings namespace IS its profile entry id (the Loader
+ * row id): the Host keys every served form by `entry.options.id` and resolves
+ * a write with `configEditor.entries().find((row) => row.options.id === ns)`,
+ * and the built-in cards follow the same rule (their keys are the row ids
  * `bash-sandbox`, `pwsh-sandbox`, `ui-conversation` — not package names). This
- * plugin's row is declared in ./cordis.patch.yml as `id: session-head-prompt`,
- * which is also the namespace the 0.1.5 half registers, so both versions edit
- * one and the same section. Asking for any other id (the package name included)
- * answers "No configurable plugin entry".
+ * plugin's row is declared in ./cordis.patch.yml as `id: session-head-prompt`.
+ * Asking for any other id (the package name included) answers "No configurable
+ * plugin entry".
  */
 export const ENTRY_ID = 'session-head-prompt'
 
@@ -86,7 +75,7 @@ const PLUGIN_MANAGER_KEY = PACKAGE_ID
 class HeadPromptCardController {
   private readonly form: CardForm<HeadPromptSettings>
 
-  /** @param scope - the settings scope for this card (plugin-owned on both hosts). */
+  /** @param scope - the settings scope for this card (served by the host half's settings face). */
   constructor(private readonly scope: SettingsScope<HeadPromptSettings>) {
     this.form = new CardForm(scope, [booleanField('enabled'), textField('prompt')])
     // The card reads its state from the module store (see
@@ -146,7 +135,7 @@ export function apply(ctx: Context): void {
       () => supervision.onEntryError!((key, entry, error, info) => {
         const id = (entry as { options?: { id?: string; key?: string } } | undefined)?.options
         const owner = id?.id ?? id?.key ?? '(unknown)'
-        if (key === SHARED_ITEM_SLOT || key === SHARED_SECTION_SLOT || owner === PACKAGE_ID || owner === SETTINGS_NS) {
+        if (key === SHARED_ITEM_SLOT || key === SHARED_SECTION_SLOT || owner === PACKAGE_ID) {
           console.error(
             '[dsh-session-prompt] ENTRY CRASHED slot=', key, 'owner=', owner,
             'abdicated=', info?.abdicated === true, 'cause=', error,
@@ -157,12 +146,10 @@ export function apply(ctx: Context): void {
     )
   }
 
-  // The card's scope is adopted once (plugin-owned on both host lines), so the
-  // unused-host branches of registerCard are gone: the shared block's child
-  // slot and the plugin manager's bundle-config seat are this plugin's only
-  // surfaces now. The 0.1.5 plugins tab reads the same scope through the host
-  // half's settings face — on that line the plugin row keeps its namespace,
-  // and the own-file store answers both.
+  // The card's scope is adopted once (the plugin's own settings face), so the
+  // shared block's child slot and the plugin manager's bundle-config seat are
+  // this plugin's only surfaces. The 0.1.5 plugins tab is gone with the rest
+  // of the 0.1.5 compatibility surface.
   let promptController: HeadPromptCardController | undefined
   const adoptScope = (scope: SettingsScope<HeadPromptSettings>) => {
     promptController = new HeadPromptCardController(scope)
@@ -203,25 +190,18 @@ export function apply(ctx: Context): void {
     return { ...face, defaultOpen }
   }
 
-  const registerCard = (slot: 'settings.plugin.item' | 'plugin-settings.item'): (() => void) => {
-    if (slot === 'settings.plugin.item') {
-      return ctx.slots.inject(slot, () => ctx.slots.register({
-        name: slot,
-        key: SETTINGS_NS,
-        priority: 50,
-        inject: cardFace,
-      }, HeadPromptCard))
-    }
-
-    return ctx.slots.inject(slot, () => ctx.slots.register({
-      name: slot,
+  const registerCard = (): (() => void) =>
+    ctx.slots.inject(SHARED_ITEM_SLOT, () => ctx.slots.register({
+      name: SHARED_ITEM_SLOT,
       id: PACKAGE_ID,
       // 《插件设置》卡片统一排位（列表按 order 升序渲染）：
       // session-prompt 10 / workbuddy 20 / qoder 30 —— 本卡排最前。
       order: 10,
+      // The shared block lists its cards collapsed (the factory's
+      // `defaultOpen` default); the Plugins-panel registration opens the same
+      // card. One face, two surfaces.
       inject: cardFace,
     }, HeadPromptCard as unknown as SharedItemComponent))
-  }
 
   // 幂等防护：卡片在子槽位里的注册只能发生一次。重复 register 同 id 会在
   // slots.inject 的 declaration effect 里同步抛错，进而杀死整个插件 fiber
@@ -247,7 +227,7 @@ export function apply(ctx: Context): void {
           console.error('[dsh-session-prompt] shared block container registration failed:', error)
         }
       }
-      const disposeItem = registerCard(SHARED_ITEM_SLOT)
+      const disposeItem = registerCard()
       return () => {
         disposeItem()
         disposeContainer?.()
@@ -287,11 +267,9 @@ export function apply(ctx: Context): void {
     }
   }
 
-  // 插件自有配置（<profile>/.dsh-session-prompt/settings.json）：两条宿主线的
-  // 读写都走宿主半的 settings face，不再经过 settingsScope / configForms。
-  // 0.1.7 的 configForms 写入会整树 reconcile + fiber 热重载（每次约 1~1.5 秒，
-  // 且每次保存都刷新所有客户端镜像），自有文件写入是本地毫秒级原子写。
-  // 卡片注册无条件进行：scope 在启动时载入，迟到也不会漏掉 UI。
+  // 插件自有配置（<profile>/.dsh-session-prompt/settings.json）：读写都走宿主半
+  // 的 settings face，不经过任何宿主配置服务。卡片注册无条件进行：scope 在启动
+  // 即载入，迟到也不会漏掉 UI。
   const ownScope = new OwnSettingsScope()
   void ownScope.load().catch(() => {})
   adoptScope(ownScope as unknown as SettingsScope<HeadPromptSettings>)

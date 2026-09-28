@@ -1,14 +1,14 @@
 /**
- * Plugin-owned settings scope over the host's settings face.
+ * Plugin-owned settings scope over the plugin's own settings face.
  *
- * The 0.1.7 write path persists every settings change through the profile
- * patch (`configEditor.edit`), which reconciles the whole loader tree, reloads
- * the plugin fiber (~1–1.5 s), and refreshes every client mirror — so a card
- * that toggles one switch pays a full tree recompose, and a card that saves
- * nine fields pays it nine times (each intermediate snapshot then overwrites
- * the form the user is still typing in).
+ * A write used to persist through the profile patch (`configEditor.edit`),
+ * which reconciles the whole loader tree, reloads the plugin fiber
+ * (~1–1.5 s), and refreshes every client mirror — so a card that toggles one
+ * switch pays a full tree recompose, and a card that saves nine fields pays
+ * it nine times (each intermediate snapshot then overwrites the form the user
+ * is still typing in).
  *
- * This plugin now owns its settings in `<profile>/.dsh-session-prompt/
+ * This plugin owns its settings in `<profile>/.dsh-session-prompt/
  * settings.json` and serves them over a loopback route the browser card talks
  * to. This module is the browser half of that contract: it implements the same
  * `SettingsScope` surface `CardForm` was written against (snapshot, subscribe,

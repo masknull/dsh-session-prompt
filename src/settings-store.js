@@ -152,78 +152,11 @@ export function writeSettings(values) {
   renameSync(tmp, path)
 }
 
-// ── legacy settings.yaml reader ─────────────────────────────────────────────
-//
-// The 0.1.5 host kept every plugin's settings in `$DSH_HOME/settings.yaml`;
-// 0.1.7 renames it to `settings.yaml.imported` once, on the first boot, and
-// imports only the sections whose names match a profile entry id. Sections
-// named for the 0.1.5 NAMESPACES this plugin used to serve name no entry in the
-// profile (the rows are keyed differently), so the platform refuses them and
-// their data survives ONLY in the renamed file. Reading it here recovers that
-// data — independently of the platform's import, its section-name mapping, and
-// its timing.
-//
-// js-yaml is the parser the Host itself uses (it is cordis-plugin-include's
-// dependency). It is NOT resolvable from a plugin's own module path, so it is
-// declared in this package's dependencies and installed into the checkout's
-// node_modules; the build inlines it, which keeps the published artifact
-// self-contained.
-
-// js-yaml is a CJS module: rolldown inlines it into the bundle, and a named
-// import across that CJS boundary is not guaranteed to survive the transform
-// (Node's own ESM loader handles it; the bundler's interop may not). Resolve
-// the callable off the default export, with the named shape as the first
-// candidate, so either bundling outcome works.
-import yamlModule from 'js-yaml'
-
-const loadYaml = (typeof yamlModule?.load === 'function' ? yamlModule.load : yamlModule?.default?.load)
-
-/** The legacy document to read: the live 0.1.5 file first, else the renamed one. */
-function legacySettingsPath() {
-  const home = dshHome()
-  for (const name of ['settings.yaml', 'settings.yaml.imported']) {
-    const path = join(home, name)
-    if (existsSync(path)) return path
-  }
-  return undefined
-}
-
-/**
- * Read this plugin's sections out of the legacy settings document.
- * @param {readonly string[]} namespaces - the section names the 0.1.5 host
- *   keyed this plugin's settings under (more than one when the plugin had
- *   several served sections).
- * @returns {object | undefined} the union of those sections' fields, or
- *   undefined when the document is absent, unreadable, or holds none of them.
- */
-export function readLegacySections(namespaces) {
-  const path = legacySettingsPath()
-  if (path === undefined) return undefined
-  let document
-  try {
-    document = loadYaml(readFileSync(path, 'utf8'))
-  } catch (error) {
-    // Unreadable or unparsable: the legacy layer is a bonus, never a
-    // requirement — the seed rule falls through to the entry and the defaults.
-    return undefined
-  }
-  if (document === null || typeof document !== 'object') return undefined
-  const merged = {}
-  let found = false
-  for (const ns of namespaces) {
-    const section = document[ns]
-    if (section === null || typeof section !== 'object' || Array.isArray(section)) continue
-    Object.assign(merged, section)
-    found = true
-  }
-  return found ? merged : undefined
-}
-
 /**
  * Reserved bookkeeping key: how many writes the settings card has made through
- * this store. Its presence separates "the file holds migration seed" from "the
- * file holds the user's live edits" — see the seed rule in ./index.js. Field
- * readers address their fields by name and never collide with it.
+ * this store. Its presence separates "the file holds the startup seed" from
+ * "the file holds the user's live edits" — see the seed rule in ./index.js.
+ * Field readers address their fields by name and never collide with it.
  */
 const WRITE_MARK = '__writes'
 
@@ -250,10 +183,7 @@ export class SettingsStore {
   /**
    * Whether the settings card has ever written through this store.
    *
-   * False during the migration window — the window where the legacy settings
-   * document can still deliver the user's real values, and where a first seed
-   * may have been taken before those landed. While false the entry config stays
-   * authoritative (where it carries a non-default value); once the card writes,
+   * While false the entry config stays authoritative; once the card writes,
    * the file is — a runtime edit must never be regressed by a stale row.
    * @returns {boolean}
    */

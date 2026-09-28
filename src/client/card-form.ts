@@ -13,13 +13,13 @@
 import { createSnapshotStore, type SnapshotStore } from '@deepseek-ai/dsh-client-store'
 
 /**
- * One namespace's state as the Host serves it.
+ * One settings namespace's state as the plugin's own settings face serves it.
  *
- * Spelled structurally rather than imported: 0.1.5 serves it from
- * `ctx.settingsScope` (a namespace the plugin registers), 0.1.7 from
- * `ctx.configForms` (a profile entry), and both answer the same fields — so the
- * form below needs one shape instead of a type from a specific Host version
- * (a client bundle may not depend on a Host package anyway).
+ * Spelled structurally rather than imported: the plugin's browser half reads
+ * its configuration over the host half's own route (see
+ * ./http-settings-scope.ts), and a client bundle may not depend on a Host
+ * package anyway — so the form below needs one shape instead of a type from a
+ * specific Host version.
  */
 export interface SettingsSnapshot<T> {
   /** `'ready'` once the Host serves this namespace; anything else means it is not served (yet). */
