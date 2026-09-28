@@ -1,9 +1,12 @@
 /**
  * The settings card: an expandable entry in the web settings page's
- * "Plugin configuration" tab, keyed by the settings namespace it edits.
- * It draws its own chrome — mirroring the shared plugin-card design tokens
- * (see ./card.css) — because cross-plugin value imports are forbidden; the
- * card writes only through the staged form's save action.
+ * "Plugin configuration" tab, keyed by the settings namespace it edits —
+ * and, on the 0.1.7 plugin manager, the same card on the bundle's own page
+ * in the sidebar's Plugins panel (opened expanded there, see `defaultOpen`
+ * on the card face). It draws its own chrome — mirroring the shared
+ * plugin-card design tokens (see ./card.css) — because cross-plugin value
+ * imports are forbidden; the card writes only through the staged form's
+ * save action.
  */
 
 import { useState, useSyncExternalStore } from 'react'
@@ -81,15 +84,17 @@ const FALLBACK_COPY: Record<string, string> = {
  * Hook order is fixed: exactly one `useSyncExternalStore` over the module store
  * plus one `useState`. The state never arrives through a renderer-bound hook
  * prop, so no call here is conditional — a conditional hook call is what crashed
- * this entry (and got it abdicated) before.
+ * this entry (and got it abdicated) before. The fold state starts from the
+ * face's `defaultOpen` (collapsed in the settings block, expanded on the
+ * bundle's Plugins-panel page) and stays the viewer's afterwards.
  *
  * @param props - the card's actions and translator, bound by the registration.
  * @returns the card element.
  */
 export function HeadPromptCard(props: HeadPromptCardProps) {
-  const state = useSyncExternalStore(subscribePromptCard, promptCardState, promptCardState)
-  const [open, setOpen] = useState(false)
   const face = (props ?? {}) as Partial<HeadPromptCardFace>
+  const state = useSyncExternalStore(subscribePromptCard, promptCardState, promptCardState)
+  const [open, setOpen] = useState(face.defaultOpen === true)
   const bound = typeof face.t === 'function' ? face.t : undefined
   const t = (key: string): string => bound?.(key) ?? FALLBACK_COPY[key] ?? key
   const title = t('title')

@@ -33,4 +33,12 @@ export interface HeadPromptCardState extends CardShell {
 export interface HeadPromptCardFace extends CardActions {
   /** Translator bound to this card's locale namespace by the registering half. */
   t: (key: string, params?: Record<string, unknown>) => string
+  /**
+   * Whether the card starts expanded. The shared 《插件设置》 block lists its
+   * cards collapsed; this bundle's page in the sidebar's Plugins panel has
+   * room for the whole configuration, so that registration opens the card at
+   * once. The fold state stays the viewer's afterwards — the two surfaces do
+   * not share it.
+   */
+  defaultOpen?: boolean
 }

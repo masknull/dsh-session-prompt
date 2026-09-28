@@ -18,6 +18,11 @@
 
 import type { Context } from '@deepseek-ai/cordis'
 import type { PropsRenderSlots, PropsRuntime, SlotComponent } from '@deepseek-ai/dsh-client-ui-slots'
+// Type-only: the ConfigForm types the bundle-config restatement below spells
+// its owner with — the same package upstream's plugin manager imports them
+// from. Cross-plugin VALUE imports stay forbidden; a restated shape does not
+// import the declaring package at runtime.
+import type { ConfigForm, ConfigFormSnapshot } from '@deepseek-ai/dsh-client-ui-settings/client'
 
 /** Slot the container occupies (declared by the Host in both versions). */
 export const SHARED_SECTION_SLOT = 'settings.section'
@@ -42,7 +47,45 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
     'settings.section': { kind: 'list', scope: 'root' }
     /** Card list this container owns. */
     'plugin-settings.item': { kind: 'list', scope: 'root' }
+    /**
+     * A bundle's own configuration, keyed by the bundle's package name and
+     * rendered on the bundle's page in the sidebar's Plugins panel between
+     * its description and its rows (`view: 'page'` only). Declared by the
+     * Host's plugin manager as a child of its `main` registration; the
+     * package is a Host built-in this bundle does not depend on (client
+     * bundle purity), so the seat is re-declared here to make the
+     * registration type-check.
+     *
+     * The declaration must stay STRUCTURALLY IDENTICAL to upstream's: when a
+     * peer package ships its own merge, a duplicate conflicting member would
+     * fail compilation — the guard against drift. The owner shapes below are
+     * upstream's `PluginConfigViewProps` / `ConfigPageForm` verbatim, with
+     * the `ConfigForm` types taken from the settings client package this
+     * bundle already types against (the same source upstream imports them
+     * from).
+     */
+    'plugins.bundle.config': {
+      kind: 'keyed'
+      scope: 'root'
+      owner: PluginConfigViewProps
+    }
   }
+}
+
+/** Host-owned configuration values and write actions for one page's entry. */
+export interface ConfigPageForm {
+  /** Accepted Host values; refreshed by the page owner. */
+  readonly state: ConfigFormSnapshot<Record<string, unknown>>
+  /** Submit all field edits together with the revision the editor read. */
+  readonly mutate: ConfigForm<Record<string, unknown>>['mutate']
+}
+
+/** The view the plugin manager asks a configuration entry for. */
+export interface PluginConfigViewProps {
+  /** `summary` renders the one-liner alone; `page` renders the form with its save control. */
+  readonly view: 'summary' | 'page'
+  /** Host-owned configuration values and write actions for this page's entry. */
+  readonly form?: ConfigPageForm | undefined
 }
 
 /** Props the Host binds for one section entry, plus the child render share. */
